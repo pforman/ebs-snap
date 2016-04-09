@@ -12,13 +12,12 @@ import (
   //"github.com/jessevdk/go-flags"
 )
 
-func snap (session *session.Session, volumeId string) (string, error) {
+func snap (session *session.Session, volumeId string, desc string) (string, error) {
   svc := ec2.New(session)
 
   params := &ec2.CreateSnapshotInput{
-    VolumeId:    aws.String(volumeId), // Required
-    Description: aws.String("PF snap testing - delete me anytime"),
-//    DryRun:      aws.Bool(true),
+    VolumeId:    aws.String(volumeId),
+    Description: aws.String(desc),
   }
 
   resp,err := svc.CreateSnapshot(params)
@@ -32,6 +31,35 @@ func snap (session *session.Session, volumeId string) (string, error) {
   // Pretty-print the response data.
   return *resp.SnapshotId, nil
 
+}
+
+func tagSnapshot(session *session.Session, snapId string,expires string) (error) {
+  svc := ec2.New(session)
+
+  params := &ec2.CreateTagsInput{
+    Resources: []*string{
+      aws.String(snapId),
+    },
+    Tags: []*ec2.Tag{
+      {
+        Key:   aws.String("Expires"),
+        Value: aws.String(expires),
+      },
+      // More values...
+    },
+  }
+  resp, err := svc.CreateTags(params)
+
+  if err != nil {
+    // Print the error, cast err to awserr.Error to get the Code and
+    // Message from an error.
+    fmt.Println(err.Error())
+    return err
+  }
+
+  // Pretty-print the response data.
+  fmt.Println(resp)
+  return nil
 }
 
 func findVolumeId (session *session.Session, device string , instance string) (string, error) {
@@ -77,27 +105,37 @@ func main() {
   var region = flag.String("region", "us-west-2", "region of instance")
   flag.Parse()
 
-  if flag.Arg(0) == ""  {
+  mount := flag.Arg(0)
+
+  if mount == ""  {
     println ("no mount point?  bye!")
     os.Exit(1)
   }
 
-  println ("going to try to snap ", flag.Arg(0))
-  device,_ := findDeviceFromMount(flag.Arg(0))
+  println ("going to try to snap ", mount)
+  device,_ := findDeviceFromMount(mount)
   println ("main: found device", device)
 
   session := session.New(&aws.Config{Region: aws.String(*region)})
 
   startingTime := time.Now().UTC()
-  fmt.Printf ("expires at %v\n", startingTime.AddDate(0,0,*expires).Round(time.Second))
+  expireTag := fmt.Sprintf ("%v", startingTime.AddDate(0,0,*expires).Round(time.Second))
 
   println (session, *instance)
 
   println ("here we go")
   volumeId, _ := findVolumeId(session, device, *instance)
   println ("woop woop found ", volumeId)
-  snapId, _ := snap(session, volumeId)
+  // old autosnap uses hostname instead of instance-id
+  // maybe we should find that...
+  snapDesc := fmt.Sprintf("ebs-snap %s:%s:%s", *instance, device, mount)
+  snapId, _ := snap(session, volumeId, snapDesc)
   println ("OMG, snapped",snapId)
+  err := tagSnapshot(session, snapId, expireTag)
+  if err != nil {
+    println ("whoa found error in tagging:", err)
+    // delete here.
+  }
 
   os.Exit(0)
 
