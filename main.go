@@ -48,18 +48,9 @@ func tagSnapshot(session *session.Session, snapId string, expires string) error 
 			// More values...
 		},
 	}
-	resp, err := svc.CreateTags(params)
+	_, err := svc.CreateTags(params)
 
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return err
-	}
-
-	// Pretty-print the response data.
-	fmt.Println(resp)
-	return nil
+	return err
 }
 
 func findVolumeId(session *session.Session, device string, instance string) (string, error) {
@@ -102,6 +93,7 @@ func main() {
 	var instance, region, mount, device string
 
 	//var noop = flag.Bool("noop", true, "test operation, no action")
+	flag.Bool("v", false, "verbose")
 	var expires = flag.Int("expires", 1, "sets the expiration time in days")
 	//var instance = flag.String("instance", "i-6ee11663", "instance-id")
 	flag.StringVar(&region, "region", "", "region of instance (for remote snaps only)")
@@ -126,6 +118,9 @@ func main() {
 	// Set up the expiration time
 	startingTime := time.Now().UTC()
 	expireTag := fmt.Sprintf("%v", startingTime.AddDate(0, 0, *expires).Round(time.Second))
+	if verbose() {
+		println("Expiration time set to", expireTag)
+	}
 
 	// If we don't have a region, we're in for trouble
 	region = verifyRegion(region)
@@ -162,7 +157,11 @@ func main() {
 		fmt.Printf("error creating snapshot for volume %s: %s\n", volumeId, err.Error())
 		os.Exit(1)
 	}
-	println("OMG, snapped", snapId)
+	if verbose() {
+		println("Created snapshot with id: ", snapId)
+	} else {
+		println(snapId)
+	}
 	err = tagSnapshot(session, snapId, expireTag)
 	if err != nil {
 		println("error in tagging:", err)
