@@ -1,4 +1,4 @@
-package ebssnap
+package main
 
 import (
 	"flag"
@@ -23,7 +23,9 @@ func verifyInstance(session *session.Session, instance string) (string, error) {
 	mdsvc := ec2metadata.New(session)
 	// if there's no instance specified, go look it up in metadata
 	if instance == "" {
-		println("No instance-id specified, attempting to use local instance")
+		if verbose() {
+			println("No instance-id specified, attempting to use local instance")
+		}
 		i, err := mdsvc.GetMetadata("instance-id")
 		if err != nil {
 			println("Cannot detect instance-id, exiting.")

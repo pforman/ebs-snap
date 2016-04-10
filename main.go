@@ -1,4 +1,4 @@
-package ebssnap
+package main
 
 import (
 	"flag"
