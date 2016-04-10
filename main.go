@@ -112,8 +112,12 @@ func main() {
     os.Exit(1)
   }
 
-  println ("going to try to snap ", mount)
-  device,_ := findDeviceFromMount(mount)
+  device, err := findDeviceFromMount(mount)
+  if err != nil {
+    fmt.Printf("error determining device for mount %s: %s\n", mount, err.Error())
+    os.Exit(1)
+  }
+
   println ("main: found device", device)
 
   session := session.New(&aws.Config{Region: aws.String(*region)})
@@ -121,19 +125,26 @@ func main() {
   startingTime := time.Now().UTC()
   expireTag := fmt.Sprintf ("%v", startingTime.AddDate(0,0,*expires).Round(time.Second))
 
-  println (session, *instance)
 
   println ("here we go")
-  volumeId, _ := findVolumeId(session, device, *instance)
+  volumeId, err := findVolumeId(session, device, *instance)
+  if err != nil {
+    fmt.Printf("error finding volume id for device %s: %s\n", device, err.Error())
+    os.Exit(1)
+  }
   println ("woop woop found ", volumeId)
   // old autosnap uses hostname instead of instance-id
   // maybe we should find that...
   snapDesc := fmt.Sprintf("ebs-snap %s:%s:%s", *instance, device, mount)
-  snapId, _ := snap(session, volumeId, snapDesc)
-  println ("OMG, snapped",snapId)
-  err := tagSnapshot(session, snapId, expireTag)
+  snapId, err := snap(session, volumeId, snapDesc)
   if err != nil {
-    println ("whoa found error in tagging:", err)
+    fmt.Printf("error creating snapshot for volume %s: %s\n", volumeId, err.Error())
+    os.Exit(1)
+  }
+  println ("OMG, snapped",snapId)
+  err = tagSnapshot(session, snapId, expireTag)
+  if err != nil {
+    println ("error in tagging:", err)
     // delete here.
   }
 
