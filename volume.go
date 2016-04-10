@@ -1,12 +1,12 @@
 package ebssnap
 
 import (
-  "bufio"
+	"bufio"
 	//"flag"
 	"fmt"
 	"os"
-  "regexp"
-  "runtime"
+	"regexp"
+	"runtime"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -91,4 +91,3 @@ func findDeviceFromMount(mount string) (string, error) {
 	}
 	return device, nil
 }
-

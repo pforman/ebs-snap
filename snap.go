@@ -1,7 +1,7 @@
 package ebssnap
 
 import (
-  // "flag"
+	// "flag"
 	"fmt"
 
 	"github.com/aws/aws-sdk-go/aws"
