@@ -101,11 +101,13 @@ func main() {
 
   //var noop = flag.Bool("noop", true, "test operation, no action")
   var expires = flag.Int("expires", 1, "sets the expiration time in days")
-  var instance = flag.String("instance", "", "instance-id")
+  //var instance = flag.String("instance", "i-6ee11663", "instance-id")
+  var instparam = flag.String("instance", "", "instance-id")
   var region = flag.String("region", "us-west-2", "region of instance")
   flag.Parse()
 
   mount := flag.Arg(0)
+  instance := *instparam
 
   if flag.Arg(1) != "" {
     println("error: multiple mounts provided")
