@@ -26,14 +26,17 @@ func findDeviceFromMount (mount string) (string, error) {
 
   var device string = ""
   // Serious Linux-only stuff happening here...
+  // If we can't read /proc/mounts, nothing good can happen.  Get out.
   file :=  "/proc/mounts"
-  v, err := os.Stat(file)
+  _, err := os.Stat(file)
   if err != nil {
     fmt.Printf("Cannot stat file %s: %s", file, err.Error())
+    os.Exit(1)
+  }
   v, err := os.Open(file)
   if err != nil {
     fmt.Printf("Failed to open %s: %v", file, err)
-    return "", err
+    os.Exit(1)
   }
 
   scanner := bufio.NewScanner(v)
@@ -54,20 +57,18 @@ func findDeviceFromMount (mount string) (string, error) {
   return device, nil
 }
 
-func verifyInstance(session *session.Session, instance string, region string) (string, string, error) {
+func verifyInstance (session *session.Session, instance string) (string, error) {
   svc := ec2.New(session)
   mdsvc := ec2metadata.New(session)
   // if there's no instance specified, go look it up in metadata
   if instance == "" {
     println ("No instance-id specified, attempting to use local instance")
-    if mdsvc.Available() == false {
-      return "", fmt.Errorf("verifyInstance: no instance id provided and no metadata available")
-    }
-    iddoc, err := mdsvc.GetInstanceIdentityDocument()
+    i, err := mdsvc.GetMetadata("instance-id")
     if err != nil {
       return "", err
     }
-    return iddoc.InstanceID, iddoc.Region, nil
+    println ("cool, returning instance",i,"hyuk-hyuk")
+    return i, nil
   } else {
     // go verify the instance exists...
     params := &ec2.DescribeInstancesInput{

@@ -136,15 +136,22 @@ func main() {
 
 
   println ("here we go")
-  volumeId, err := findVolumeId(session, device, *instance)
+
+  instance, err = verifyInstance(session, instance)
+  if err != nil {
+    fmt.Printf("error finding instance (found '%s'): %s\n", instance, err.Error())
+    os.Exit(1)
+  }
+
+  volumeId, err := findVolumeId(session, device, instance)
   if err != nil {
     fmt.Printf("error finding volume id for device %s: %s\n", device, err.Error())
     os.Exit(1)
   }
-  println ("woop woop found ", volumeId)
+
   // old autosnap uses hostname instead of instance-id
   // maybe we should find that...
-  snapDesc := fmt.Sprintf("ebs-snap %s:%s:%s", *instance, device, mount)
+  snapDesc := fmt.Sprintf("ebs-snap %s:%s:%s", instance, device, mount)
   snapId, err := snap(session, volumeId, snapDesc)
   if err != nil {
     fmt.Printf("error creating snapshot for volume %s: %s\n", volumeId, err.Error())
