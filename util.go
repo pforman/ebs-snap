@@ -1,18 +1,17 @@
 package main
 
 import (
-//  "bufio"
-//  "fmt"
-//	"os"
-//  "regexp"
+  "bufio"
+  "fmt"
+	"os"
+  "regexp"
 
 )
 
 func findDeviceFromMount (mount string) (string, error) {
 
   // stub for Mac devel
-  return "/dev/xvda", nil
-  /* 
+  //return "/dev/xvda", nil
   var device string = ""
   // Serious Linux-only stuff happening here...
   file :=  "/proc/mounts"
@@ -38,7 +37,6 @@ func findDeviceFromMount (mount string) (string, error) {
     return device, fmt.Errorf("No device found for mount %s", mount)
   }
   return device, nil
-  */
 }
 
 func verifyInstance(instance string) (string, error) {
