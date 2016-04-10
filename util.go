@@ -5,16 +5,25 @@ import (
   "fmt"
 	"os"
   "regexp"
+  "runtime"
 
 )
 
 func findDeviceFromMount (mount string) (string, error) {
 
   // stub for Mac devel
-  //return "/dev/xvda", nil
+  if runtime.GOOS != "linux" {
+    println("*** Not on Linux?  You're going to have a bad day.")
+    println("returning static device /dev/xvda for testing only.")
+    return "/dev/xvda", nil
+  }
+
   var device string = ""
   // Serious Linux-only stuff happening here...
   file :=  "/proc/mounts"
+  v, err := os.Stat(file)
+  if err != nil {
+    fmt.Printf("Cannot stat file %s: %s", file, err.Error())
   v, err := os.Open(file)
   if err != nil {
     fmt.Printf("Failed to open %s: %v", file, err)

@@ -101,14 +101,21 @@ func main() {
 
   //var noop = flag.Bool("noop", true, "test operation, no action")
   var expires = flag.Int("expires", 1, "sets the expiration time in days")
-  var instance = flag.String("instance", "i-6ee11663", "instance-id")
+  var instance = flag.String("instance", "", "instance-id")
   var region = flag.String("region", "us-west-2", "region of instance")
   flag.Parse()
 
   mount := flag.Arg(0)
 
+  if flag.Arg(1) != "" {
+    println("error: multiple mounts provided")
+    flag.Usage()
+    os.Exit(1)
+  }
+
   if mount == ""  {
-    println ("no mount point?  bye!")
+    println ("error: must provide one mount to snapshot (example:  / )")
+    flag.Usage()
     os.Exit(1)
   }
 
