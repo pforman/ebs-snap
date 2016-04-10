@@ -101,11 +101,13 @@ func main() {
 
   //var noop = flag.Bool("noop", true, "test operation, no action")
   var expires = flag.Int("expires", 1, "sets the expiration time in days")
-  var instance = flag.String("instance", "i-6ee11663", "instance-id")
+  //var instance = flag.String("instance", "i-6ee11663", "instance-id")
+  var instparam = flag.String("instance", "", "instance-id")
   var region = flag.String("region", "us-west-2", "region of instance")
   flag.Parse()
 
   mount := flag.Arg(0)
+  instance := *instparam
 
   if mount == ""  {
     println ("no mount point?  bye!")
@@ -121,14 +123,16 @@ func main() {
   startingTime := time.Now().UTC()
   expireTag := fmt.Sprintf ("%v", startingTime.AddDate(0,0,*expires).Round(time.Second))
 
-  println (session, *instance)
+  println (session, instance)
 
   println ("here we go")
-  volumeId, _ := findVolumeId(session, device, *instance)
+ 
+  instance, _ = verifyInstance(session, instance)
+  volumeId, _ := findVolumeId(session, device, instance)
   println ("woop woop found ", volumeId)
   // old autosnap uses hostname instead of instance-id
   // maybe we should find that...
-  snapDesc := fmt.Sprintf("ebs-snap %s:%s:%s", *instance, device, mount)
+  snapDesc := fmt.Sprintf("ebs-snap %s:%s:%s", instance, device, mount)
   snapId, _ := snap(session, volumeId, snapDesc)
   println ("OMG, snapped",snapId)
   err := tagSnapshot(session, snapId, expireTag)
