@@ -45,7 +45,7 @@ func findDeviceFromMount (mount string) (string, error) {
   return device, nil
 }
 
-func verifyInstance(session *session.Session, instance string) (string, error) {
+func verifyInstance(session *session.Session, instance string, region string) (string, string, error) {
   svc := ec2.New(session)
   mdsvc := ec2metadata.New(session)
   // if there's no instance specified, go look it up in metadata
@@ -58,7 +58,7 @@ func verifyInstance(session *session.Session, instance string) (string, error) {
     if err != nil {
       return "", err
     }
-    return iddoc.InstanceID, nil
+    return iddoc.InstanceID, iddoc.Region, nil
   } else {
     // go verify the instance exists...
     params := &ec2.DescribeInstancesInput{
@@ -67,13 +67,13 @@ func verifyInstance(session *session.Session, instance string) (string, error) {
       },
     }
     _, err := svc.DescribeInstances(params)
-    if err == nil {
-      return instance, nil
+    if err != nil {
+      return "", err
     }
-    return "", err
+    return instance, nil
   }
 
   // should never get here
-  return "", nil
+  return "", fmt.Errorf("unknown error in VerifyInstance")
       
 }
