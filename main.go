@@ -66,7 +66,7 @@ func findVolumeId(session *session.Session, device string, instance string) (str
 
 	svc := ec2.New(session)
 
-	println("fVID: working with device", device, "instance", instance)
+	// println("fVID: working with device", device, "instance", instance)
 	params := &ec2.DescribeVolumesInput{
 		DryRun: aws.Bool(false),
 		Filters: []*ec2.Filter{
@@ -104,14 +104,15 @@ func main() {
 	//var noop = flag.Bool("noop", true, "test operation, no action")
 	var expires = flag.Int("expires", 1, "sets the expiration time in days")
 	//var instance = flag.String("instance", "i-6ee11663", "instance-id")
-	flag.StringVar(&instance, "instance", "", "instance-id (for remote snaps only)")
 	flag.StringVar(&region, "region", "", "region of instance (for remote snaps only)")
+	flag.StringVar(&instance, "instance", "", "instance-id (for remote snaps only)")
+	flag.StringVar(&device, "device", "", "device to snapshot (for remote snaps only, be careful!)")
 	flag.Parse()
 
 	mount = flag.Arg(0)
 
 	if flag.Arg(1) != "" {
-		println("error: multiple mounts provided")
+		println("error: multiple mounts provided, or flags after the mount argument")
 		flag.Usage()
 		os.Exit(1)
 	}
@@ -122,22 +123,26 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Set up the expiration time
+	startingTime := time.Now().UTC()
+	expireTag := fmt.Sprintf("%v", startingTime.AddDate(0, 0, *expires).Round(time.Second))
+
 	// If we don't have a region, we're in for trouble
 	region = verifyRegion(region)
 	session := session.New(&aws.Config{Region: aws.String(region)})
 
-	device, err := findDeviceFromMount(mount)
-	if err != nil {
-		fmt.Printf("error determining device for mount %s: %s\n", mount, err.Error())
-		os.Exit(1)
+	// If we didn't provide a device, look one up in /proc/mounts
+	// This obviously only works on the local host.
+	if device == "" {
+		res, err := findDeviceFromMount(mount)
+		if err != nil {
+			fmt.Printf("error determining device for mount %s: %s\n", mount, err.Error())
+			os.Exit(1)
+		}
+		device = res
 	}
 
-	println("main: found device", device)
-
-	startingTime := time.Now().UTC()
-	expireTag := fmt.Sprintf("%v", startingTime.AddDate(0, 0, *expires).Round(time.Second))
-
-	instance, err = verifyInstance(session, instance)
+	instance, err := verifyInstance(session, instance)
 	if err != nil {
 		fmt.Printf("error finding instance (found '%s'): %s\n", instance, err.Error())
 		os.Exit(1)
@@ -161,7 +166,7 @@ func main() {
 	err = tagSnapshot(session, snapId, expireTag)
 	if err != nil {
 		println("error in tagging:", err)
-		// delete here.
+		// delete here on error
 	}
 
 	os.Exit(0)
