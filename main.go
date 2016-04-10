@@ -1,4 +1,4 @@
-package main
+package ebssnap
 
 import (
 	"flag"
@@ -8,85 +8,8 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/ec2"
 	//"github.com/jessevdk/go-flags"
 )
-
-func snap(session *session.Session, volumeId string, desc string) (string, error) {
-	svc := ec2.New(session)
-
-	params := &ec2.CreateSnapshotInput{
-		VolumeId:    aws.String(volumeId),
-		Description: aws.String(desc),
-	}
-
-	resp, err := svc.CreateSnapshot(params)
-	if err != nil {
-		// Print the error, cast err to awserr.Error to get the Code and
-		// Message from an error.
-		fmt.Println(err.Error())
-		return "", err
-	}
-
-	// Pretty-print the response data.
-	return *resp.SnapshotId, nil
-
-}
-
-func tagSnapshot(session *session.Session, snapId string, expires string) error {
-	svc := ec2.New(session)
-
-	params := &ec2.CreateTagsInput{
-		Resources: []*string{
-			aws.String(snapId),
-		},
-		Tags: []*ec2.Tag{
-			{
-				Key:   aws.String("Expires"),
-				Value: aws.String(expires),
-			},
-			// More values...
-		},
-	}
-	_, err := svc.CreateTags(params)
-
-	return err
-}
-
-func findVolumeId(session *session.Session, device string, instance string) (string, error) {
-
-	svc := ec2.New(session)
-
-	// println("fVID: working with device", device, "instance", instance)
-	params := &ec2.DescribeVolumesInput{
-		DryRun: aws.Bool(false),
-		Filters: []*ec2.Filter{
-			{
-				Name: aws.String("attachment.instance-id"),
-				Values: []*string{
-					aws.String(instance),
-				},
-			},
-			{
-				Name: aws.String("attachment.device"),
-				Values: []*string{
-					aws.String(device),
-				},
-			},
-		},
-	}
-	resp, err := svc.DescribeVolumes(params)
-
-	if err != nil {
-		return "", err
-	}
-
-	if len(resp.Volumes) > 0 {
-		// is there ever some case when we might get back 2?
-		return *resp.Volumes[0].VolumeId, nil
-	}
-	return "", fmt.Errorf("unable to find volume ID for device %s on instance %s", device, instance)
-}
 
 func main() {
 
@@ -152,7 +75,7 @@ func main() {
 	// old autosnap uses hostname instead of instance-id
 	// maybe we should find that...
 	snapDesc := fmt.Sprintf("ebs-snap %s:%s:%s", instance, device, mount)
-	snapId, err := snap(session, volumeId, snapDesc)
+	snapId, err := snapVolume(session, volumeId, snapDesc)
 	if err != nil {
 		fmt.Printf("error creating snapshot for volume %s: %s\n", volumeId, err.Error())
 		os.Exit(1)
