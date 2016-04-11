@@ -11,6 +11,11 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 )
 
+func printVersion(version string) {
+	println("ebs-snap version", version)
+	os.Exit(0)
+}
+
 func verbose() bool {
 	if flag.Lookup("v").Value.String() == "true" {
 		return true

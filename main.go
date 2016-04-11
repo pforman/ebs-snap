@@ -13,16 +13,28 @@ import (
 
 func main() {
 
+	/******  Update as necessary  *******/
+	const version = "0.1.0"
+	const expire_default = 7 // days
+	/************************************/
+
 	var instance, region, mount, device string
 
 	//var noop = flag.Bool("noop", true, "test operation, no action")
-	flag.Bool("v", false, "verbose")
-	var expires = flag.Int("expires", 1, "sets the expiration time in days")
+	flag.Bool("v", false, "verbose mode, provides more info")
+	flag.Bool("version", false, "print version string, then exit")
+	var expires = flag.Int("expires", expire_default, "sets the expiration time in days")
 	//var instance = flag.String("instance", "i-6ee11663", "instance-id")
 	flag.StringVar(&region, "region", "", "region of instance (for remote snaps only)")
 	flag.StringVar(&instance, "instance", "", "instance-id (for remote snaps only)")
 	flag.StringVar(&device, "device", "", "device to snapshot (for remote snaps only, be careful!)")
 	flag.Parse()
+
+	// version is a quick exit
+	if flag.Lookup("version").Value.String() == "true" {
+		printVersion(version)
+		os.Exit(0)
+	}
 
 	mount = flag.Arg(0)
 
