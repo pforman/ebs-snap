@@ -85,10 +85,10 @@ func main() {
 	} else {
 		println(snapId)
 	}
-	err = tagSnapshot(session, snapId, expireTag)
+	err = tagSnapshot(session, snapId, volumeId, expireTag)
 	if err != nil {
 		println("error in tagging:", err)
-		// delete here on error
+		// delete here on error, if we can...
 	}
 
 	os.Exit(0)
