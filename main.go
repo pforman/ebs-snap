@@ -19,15 +19,19 @@ func main() {
 	/************************************/
 
 	var instance, region, mount, device string
+  var precommand, postcommand string
+  var expires int
 
 	//var noop = flag.Bool("noop", true, "test operation, no action")
 	flag.Bool("v", false, "verbose mode, provides more info")
 	flag.Bool("version", false, "print version string, then exit")
-	var expires = flag.Int("expires", expire_default, "sets the expiration time in days")
+	flag.IntVar(&expires, "expires", expire_default, "sets the expiration time in days")
 	//var instance = flag.String("instance", "i-6ee11663", "instance-id")
 	flag.StringVar(&region, "region", "", "region of instance (for remote snaps only)")
 	flag.StringVar(&instance, "instance", "", "instance-id (for remote snaps only)")
 	flag.StringVar(&device, "device", "", "device to snapshot (for remote snaps only, be careful!)")
+	flag.StringVar(&precommand, "prescript", "", "command to run before snapshot")
+	flag.StringVar(&postcommand, "postscript", "", "command to run after snapshot")
 	flag.Parse()
 
 	// version is a quick exit
@@ -52,7 +56,7 @@ func main() {
 
 	// Set up the expiration time
 	startingTime := time.Now().UTC()
-	expireTag := fmt.Sprintf("%v", startingTime.AddDate(0, 0, *expires).Round(time.Second))
+	expireTag := fmt.Sprintf("%v", startingTime.AddDate(0, 0, expires).Round(time.Second))
 	if verbose() {
 		println("Expiration time set to", expireTag)
 	}
@@ -83,6 +87,15 @@ func main() {
 		fmt.Printf("error finding volume id for device %s: %s\n", device, err.Error())
 		os.Exit(1)
 	}
+
+  // Pre-script
+  if precommand != "" {
+    err = preScript(precommand)
+    if err != nil {
+      fmt.Printf("error in pre-run command '%s': %s\n", precommand, err.Error())
+      os.Exit(1)
+    }
+  }
 
 	// old autosnap uses hostname instead of instance-id
 	// maybe we should find that...
