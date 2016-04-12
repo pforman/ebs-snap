@@ -1,28 +1,29 @@
 package main
 
 import (
-  "fmt"
   "os/exec"
-  "syscall"
+  "strings"
+  //"syscall"
 )
 
-func preScript(script string) error {
-  cmd := exec.Command(script)
+func runScript(script string) error {
+  var err error
+  cmd := strings.Split(script, " ")
+  c := exec.Command(cmd[0],cmd[1:]...)
 
-  var waitStatus syscall.WaitStatus
-  if err := cmd.Run(); err != nil {
+  // var waitStatus syscall.WaitStatus = 0
+  if err = c.Run(); err != nil {
+    /* If we want the exit status specifically
     if exitError, ok := err.(*exec.ExitError); ok {
       waitStatus = exitError.Sys().(syscall.WaitStatus)
-      fmt.Printf("error found: %v\n", err)
-      fmt.Printf("exit status was: %d\n", waitStatus.ExitStatus())
-      return err
     }
   } else {
-    // Command was successful
+    // Command was successful, this should be 0
     waitStatus = cmd.ProcessState.Sys().(syscall.WaitStatus)
-    fmt.Printf("no error, exit status was: %d\n", waitStatus.ExitStatus())
-    return nil
+    */
   }
-  return nil
 
+  // Return the whole error.  If it's missing, not executable, fails
+  // or whatever, we're going to fail the run anyway
+  return err
 }

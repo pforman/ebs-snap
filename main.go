@@ -90,10 +90,14 @@ func main() {
 
   // Pre-script
   if precommand != "" {
-    err = preScript(precommand)
+    err = runScript(precommand)
     if err != nil {
       fmt.Printf("error in pre-run command '%s': %s\n", precommand, err.Error())
       os.Exit(1)
+    } else {
+      if verbose() {
+        println("pre-run script completed successfully")
+      }
     }
   }
 
@@ -105,15 +109,31 @@ func main() {
 		fmt.Printf("error creating snapshot for volume %s: %s\n", volumeId, err.Error())
 		os.Exit(1)
 	}
-	if verbose() {
-		println("Created snapshot with id: ", snapId)
-	} else {
-		println(snapId)
-	}
+
+  // Tagging
 	err = tagSnapshot(session, snapId, volumeId, expireTag)
 	if err != nil {
 		println("error in tagging:", err)
 		// delete here on error, if we can...
+	}
+
+  // Post-script
+  if postcommand != "" {
+    err = runScript(postcommand)
+    if err != nil {
+      fmt.Printf("error in post-run command '%s': %s\n", postcommand, err.Error())
+    } else {
+      if verbose() {
+        println("post-run script completed successfully")
+      }
+    }
+  }
+
+  // final output
+	if verbose() {
+		println("Created snapshot with id: ", snapId)
+	} else {
+		println(snapId)
 	}
 
 	os.Exit(0)
