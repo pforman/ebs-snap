@@ -7,9 +7,23 @@ import (
 )
 
 func runScript(script string) error {
+
   var err error
-  cmd := strings.Split(script, " ")
-  c := exec.Command(cmd[0],cmd[1:]...)
+
+  rawargs := strings.Split(script, " ")
+
+  // squash multiple spaces to prevent "" arguments
+  // do this first in case of leading spaces
+  args := make([]string,0,10)
+  for i,v := range rawargs {
+    if rawargs[i] != "" {
+      args = append(args,v)
+    }
+  }
+
+  cmd, args := args[0],args[1:]
+
+  c := exec.Command(cmd,args...)
 
   // var waitStatus syscall.WaitStatus = 0
   if err = c.Run(); err != nil {
