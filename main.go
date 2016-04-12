@@ -19,8 +19,8 @@ func main() {
 	/************************************/
 
 	var instance, region, mount, device string
-  var precommand, postcommand string
-  var expires int
+	var precommand, postcommand string
+	var expires int
 
 	//var noop = flag.Bool("noop", true, "test operation, no action")
 	flag.Bool("v", false, "verbose mode, provides more info")
@@ -88,18 +88,18 @@ func main() {
 		os.Exit(1)
 	}
 
-  // Pre-script
-  if precommand != "" {
-    err = runScript(precommand)
-    if err != nil {
-      fmt.Printf("error in pre-run command '%s': %s\n", precommand, err.Error())
-      os.Exit(1)
-    } else {
-      if verbose() {
-        println("pre-run script completed successfully")
-      }
-    }
-  }
+	// Pre-script
+	if precommand != "" {
+		err = runScript(precommand)
+		if err != nil {
+			fmt.Printf("error in pre-run command '%s': %s\n", precommand, err.Error())
+			os.Exit(1)
+		} else {
+			if verbose() {
+				println("pre-run script completed successfully")
+			}
+		}
+	}
 
 	// old autosnap uses hostname instead of instance-id
 	// maybe we should find that...
@@ -110,26 +110,26 @@ func main() {
 		os.Exit(1)
 	}
 
-  // Tagging
+	// Tagging
 	err = tagSnapshot(session, snapId, volumeId, expireTag)
 	if err != nil {
 		println("error in tagging:", err)
 		// delete here on error, if we can...
 	}
 
-  // Post-script
-  if postcommand != "" {
-    err = runScript(postcommand)
-    if err != nil {
-      fmt.Printf("error in post-run command '%s': %s\n", postcommand, err.Error())
-    } else {
-      if verbose() {
-        println("post-run script completed successfully")
-      }
-    }
-  }
+	// Post-script
+	if postcommand != "" {
+		err = runScript(postcommand)
+		if err != nil {
+			fmt.Printf("error in post-run command '%s': %s\n", postcommand, err.Error())
+		} else {
+			if verbose() {
+				println("post-run script completed successfully")
+			}
+		}
+	}
 
-  // final output
+	// final output
 	if verbose() {
 		println("Created snapshot with id: ", snapId)
 	} else {
