@@ -16,7 +16,7 @@ The options are set to prefer on-instance operation, however snapshots an be ini
 ebs-snap /
 ```
 
-The mount point (in this case `/`) is matched to a device using /proc/mounts, then the corresponding volume-id is retrieved from the API.  RA snapshot is created of that volume-id, then all tags from the source volume are copied, plus an `Expires` tag, formatted as an ISO8601 date string.
+The mount point (in this case `/`) is matched to a device using /proc/mounts, then the corresponding volume-id is retrieved from the API.  A snapshot is created of that volume-id, then all tags from the source volume are copied, plus an `Expires` tag, formatted as an ISO8601 date string.
 
 ## Options
 

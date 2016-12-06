@@ -19,8 +19,8 @@ func main() {
 	/************************************/
 
 	var instance, region, mount, device string
-  var precommand, postcommand string
-  var expires int
+	var precommand, postcommand string
+	var expires int
 
 	//var noop = flag.Bool("noop", true, "test operation, no action")
 	flag.Bool("v", false, "verbose mode, provides more info")
@@ -63,7 +63,7 @@ func main() {
 
 	// If we don't have a region, we're in for trouble
 	region = verifyRegion(region)
-	session := session.New(&aws.Config{Region: aws.String(region)})
+	s := session.New(&aws.Config{Region: aws.String(region)})
 
 	// If we didn't provide a device, look one up in /proc/mounts
 	// This obviously only works on the local host.
@@ -76,31 +76,31 @@ func main() {
 		device = res
 	}
 
-	instance, err := verifyInstance(session, instance)
+	instance, err := verifyInstance(s, instance)
 	if err != nil {
 		fmt.Printf("error finding instance (found '%s'): %s\n", instance, err.Error())
 		os.Exit(1)
 	}
 
-	volumeId, err := findVolumeId(session, device, instance)
+	volumeId, err := findVolumeId(s, device, instance)
 	if err != nil {
 		fmt.Printf("error finding volume id for device %s: %s\n", device, err.Error())
 		os.Exit(1)
 	}
 
-  // Pre-script
-  if precommand != "" {
-    err = preScript(precommand)
-    if err != nil {
-      fmt.Printf("error in pre-run command '%s': %s\n", precommand, err.Error())
-      os.Exit(1)
-    }
-  }
+	// Pre-script
+	if precommand != "" {
+		err = preScript(precommand)
+		if err != nil {
+			fmt.Printf("error in pre-run command '%s': %s\n", precommand, err.Error())
+			os.Exit(1)
+		}
+	}
 
 	// old autosnap uses hostname instead of instance-id
 	// maybe we should find that...
 	snapDesc := fmt.Sprintf("ebs-snap %s:%s:%s", instance, device, mount)
-	snapId, err := snapVolume(session, volumeId, snapDesc)
+	snapId, err := snapVolume(s, volumeId, snapDesc)
 	if err != nil {
 		fmt.Printf("error creating snapshot for volume %s: %s\n", volumeId, err.Error())
 		os.Exit(1)
@@ -110,7 +110,7 @@ func main() {
 	} else {
 		println(snapId)
 	}
-	err = tagSnapshot(session, snapId, volumeId, expireTag)
+	err = tagSnapshot(s, snapId, volumeId, expireTag)
 	if err != nil {
 		println("error in tagging:", err)
 		// delete here on error, if we can...
