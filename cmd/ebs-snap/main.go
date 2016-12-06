@@ -4,10 +4,11 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"time"
+
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/pforman/ebs-snap"
 	//"github.com/jessevdk/go-flags"
 )
 
@@ -21,22 +22,21 @@ func main() {
 	var instance, region, mount, device string
 	var precommand, postcommand string
 	var expires int
+	var ret = 0
 
 	//var noop = flag.Bool("noop", true, "test operation, no action")
 	flag.Bool("v", false, "verbose mode, provides more info")
 	flag.Bool("version", false, "print version string, then exit")
 	flag.IntVar(&expires, "expires", expire_default, "sets the expiration time in days")
 	//var instance = flag.String("instance", "i-6ee11663", "instance-id")
-	flag.StringVar(&region, "region", "", "region of instance (for remote snaps only)")
-	flag.StringVar(&instance, "instance", "", "instance-id (for remote snaps only)")
-	flag.StringVar(&device, "device", "", "device to snapshot (for remote snaps only, be careful!)")
+	flag.StringVar(&device, "device", "", "device to snapshot (for unmounted volumes only)")
 	flag.StringVar(&precommand, "prescript", "", "command to run before snapshot")
 	flag.StringVar(&postcommand, "postscript", "", "command to run after snapshot")
 	flag.Parse()
 
 	// version is a quick exit
 	if flag.Lookup("version").Value.String() == "true" {
-		printVersion(version)
+		snap.PrintVersion(version)
 		os.Exit(0)
 	}
 
@@ -54,21 +54,15 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Set up the expiration time
-	startingTime := time.Now().UTC()
-	expireTag := fmt.Sprintf("%v", startingTime.AddDate(0, 0, expires).Round(time.Second))
-	if verbose() {
-		println("Expiration time set to", expireTag)
-	}
 
 	// If we don't have a region, we're in for trouble
-	region = verifyRegion(region)
+	region = snap.VerifyRegion(region)
 	s := session.New(&aws.Config{Region: aws.String(region)})
 
 	// If we didn't provide a device, look one up in /proc/mounts
 	// This obviously only works on the local host.
 	if device == "" {
-		res, err := findDeviceFromMount(mount)
+		res, err := snap.FindDeviceFromMount(mount)
 		if err != nil {
 			fmt.Printf("error determining device for mount %s: %s\n", mount, err.Error())
 			os.Exit(1)
@@ -76,13 +70,13 @@ func main() {
 		device = res
 	}
 
-	instance, err := verifyInstance(s, instance)
+	instance, err := snap.VerifyInstance(s, instance)
 	if err != nil {
 		fmt.Printf("error finding instance (found '%s'): %s\n", instance, err.Error())
 		os.Exit(1)
 	}
 
-	volumeId, err := findVolumeId(s, device, instance)
+	volumeId, err := snap.FindVolumeId(s, device, instance)
 	if err != nil {
 		fmt.Printf("error finding volume id for device %s: %s\n", device, err.Error())
 		os.Exit(1)
@@ -90,32 +84,32 @@ func main() {
 
 	// Pre-script
 	if precommand != "" {
-		err = preScript(precommand)
+		err = snap.Script(precommand)
 		if err != nil {
 			fmt.Printf("error in pre-run command '%s': %s\n", precommand, err.Error())
 			os.Exit(1)
 		}
 	}
 
-	// old autosnap uses hostname instead of instance-id
-	// maybe we should find that...
-	snapDesc := fmt.Sprintf("ebs-snap %s:%s:%s", instance, device, mount)
-	snapId, err := snapVolume(s, volumeId, snapDesc)
+	err = snap.CreateSnapshot(s,instance,device,mount,volumeId,expires)
 	if err != nil {
-		fmt.Printf("error creating snapshot for volume %s: %s\n", volumeId, err.Error())
-		os.Exit(1)
+		fmt.Printf("error in creating snapshot: %s", err.Error())
+		if postcommand == "" {
+			os.Exit(1)
+		} else {
+			// exit with an error, but later...
+			ret = 1
+			fmt.Println("running postcommand hook")
+		}
 	}
-	if verbose() {
-		println("Created snapshot with id: ", snapId)
-	} else {
-		println(snapId)
-	}
-	err = tagSnapshot(s, snapId, volumeId, expireTag)
-	if err != nil {
-		println("error in tagging:", err)
-		// delete here on error, if we can...
+	if postcommand != "" {
+		err = snap.Script(postcommand)
+		if err != nil {
+			fmt.Printf("error in post-run command '%s': %s\n", precommand, err.Error())
+			os.Exit(1)
+		}
 	}
 
-	os.Exit(0)
+	os.Exit(ret)
 
 }

@@ -1,4 +1,4 @@
-package main
+package snap
 
 import (
 	"bufio"
@@ -13,7 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 )
 
-func findVolumeId(session *session.Session, device string, instance string) (string, error) {
+func FindVolumeId(session *session.Session, device string, instance string) (string, error) {
 
 	svc := ec2.New(session)
 
@@ -48,7 +48,7 @@ func findVolumeId(session *session.Session, device string, instance string) (str
 	return "", fmt.Errorf("unable to find volume ID for device %s on instance %s", device, instance)
 }
 
-func findDeviceFromMount(mount string) (string, error) {
+func FindDeviceFromMount(mount string) (string, error) {
 
 	// stub for Mac devel
 	if runtime.GOOS != "linux" {
@@ -79,7 +79,7 @@ func findDeviceFromMount(mount string) (string, error) {
 		result := r.FindStringSubmatch(scanner.Text())
 		if len(result) > 1 {
 			if result[2] == mount {
-				if verbose() {
+				if Verbose() {
 					println("Found device", result[1], " mount ", result[2])
 				}
 				device = result[1]

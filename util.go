@@ -1,4 +1,4 @@
-package main
+package snap
 
 import (
 	"flag"
@@ -11,26 +11,23 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 )
 
-func printVersion(version string) {
+func PrintVersion(version string) {
 	println("ebs-snap version", version)
 	os.Exit(0)
 }
 
-func verbose() bool {
+func Verbose() bool {
 	if flag.Lookup("v").Value.String() == "true" {
 		return true
 	}
 	return false
 }
 
-func verifyInstance(session *session.Session, instance string) (string, error) {
+func VerifyInstance(session *session.Session, instance string) (string, error) {
 	svc := ec2.New(session)
 	mdsvc := ec2metadata.New(session)
 	// if there's no instance specified, go look it up in metadata
 	if instance == "" {
-		if verbose() {
-			println("No instance-id specified, attempting to use local instance")
-		}
 		i, err := mdsvc.GetMetadata("instance-id")
 		if err != nil {
 			println("Cannot detect instance-id, exiting.")
@@ -56,7 +53,7 @@ func verifyInstance(session *session.Session, instance string) (string, error) {
 	return "", fmt.Errorf("unknown error in VerifyInstance")
 }
 
-func verifyRegion(region string) string {
+func VerifyRegion(region string) string {
 	// if we don't have a region provided, then try to look one up
 	// Check the env variable, then metadata
 	if region == "" {
