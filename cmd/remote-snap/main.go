@@ -15,7 +15,6 @@ import (
 func main() {
 
 	/******  Update as necessary  *******/
-	const version = "0.1.0"
 	const expire_default = 7 // days
 	/************************************/
 
@@ -33,7 +32,7 @@ func main() {
 
 	// version is a quick exit
 	if flag.Lookup("version").Value.String() == "true" {
-		snap.PrintVersion(version)
+		snap.PrintVersion()
 		os.Exit(0)
 	}
 
@@ -80,26 +79,26 @@ func main() {
 		os.Exit(1)
 	}
 
-	snap.CreateSnapshot(s,instance,device,mount,volumeId,expires)
+	snap.CreateSnapshot(s, instance, device, mount, volumeId, expires)
 	/*
-	// old autosnap uses hostname instead of instance-id
-	// maybe we should find that...
-	snapDesc := fmt.Sprintf("ebs-snap %s:%s:%s", instance, device, mount)
-	snapId, err := snap.EC2Snapshot(s, volumeId, snapDesc)
-	if err != nil {
-		fmt.Printf("error creating snapshot for volume %s: %s\n", volumeId, err.Error())
-		os.Exit(1)
-	}
-	if snap.Verbose() {
-		println("Created snapshot with id: ", snapId)
-	} else {
-		println(snapId)
-	}
-	err = snap.TagSnapshot(s, snapId, volumeId, expireTag)
-	if err != nil {
-		println("error in tagging:", err)
-		// delete here on error, if we can...
-	}
+		// old autosnap uses hostname instead of instance-id
+		// maybe we should find that...
+		snapDesc := fmt.Sprintf("ebs-snap %s:%s:%s", instance, device, mount)
+		snapId, err := snap.EC2Snapshot(s, volumeId, snapDesc)
+		if err != nil {
+			fmt.Printf("error creating snapshot for volume %s: %s\n", volumeId, err.Error())
+			os.Exit(1)
+		}
+		if snap.Verbose() {
+			println("Created snapshot with id: ", snapId)
+		} else {
+			println(snapId)
+		}
+		err = snap.TagSnapshot(s, snapId, volumeId, expireTag)
+		if err != nil {
+			println("error in tagging:", err)
+			// delete here on error, if we can...
+		}
 	*/
 	os.Exit(0)
 

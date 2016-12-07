@@ -11,7 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 )
 
-func PrintVersion(version string) {
+func PrintVersion() {
 	println("ebs-snap version", version)
 	os.Exit(0)
 }

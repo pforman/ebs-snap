@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/pforman/ebs-snap"
@@ -15,7 +14,6 @@ import (
 func main() {
 
 	/******  Update as necessary  *******/
-	const version = "0.1.0"
 	const expire_default = 7 // days
 	/************************************/
 
@@ -30,13 +28,13 @@ func main() {
 	flag.IntVar(&expires, "expires", expire_default, "sets the expiration time in days")
 	//var instance = flag.String("instance", "i-6ee11663", "instance-id")
 	flag.StringVar(&device, "device", "", "device to snapshot (for unmounted volumes only)")
-	flag.StringVar(&precommand, "prescript", "", "command to run before snapshot")
-	flag.StringVar(&postcommand, "postscript", "", "command to run after snapshot")
+	flag.StringVar(&precommand, "pre", "", "command to run before snapshot")
+	flag.StringVar(&postcommand, "post", "", "command to run after snapshot")
 	flag.Parse()
 
 	// version is a quick exit
 	if flag.Lookup("version").Value.String() == "true" {
-		snap.PrintVersion(version)
+		snap.PrintVersion()
 		os.Exit(0)
 	}
 
@@ -53,7 +51,6 @@ func main() {
 		flag.Usage()
 		os.Exit(1)
 	}
-
 
 	// If we don't have a region, we're in for trouble
 	region = snap.VerifyRegion(region)
@@ -91,7 +88,7 @@ func main() {
 		}
 	}
 
-	err = snap.CreateSnapshot(s,instance,device,mount,volumeId,expires)
+	err = snap.CreateSnapshot(s, instance, device, mount, volumeId, expires)
 	if err != nil {
 		fmt.Printf("error in creating snapshot: %s", err.Error())
 		if postcommand == "" {
