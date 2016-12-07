@@ -6,7 +6,7 @@ import (
 	// "github.com/pforman/ebs-snap"
 )
 
-func TestRunScript(t *testing.T) {
+func TestScript(t *testing.T) {
 	// required or Verbose() blows up
 	flag.Bool("v", false, "verbose mode, provides more info")
 
