@@ -1,6 +1,6 @@
 all: build
 
-build: ebs-snap binremote-snap clean-snaps
+build: ebs-snap remote-snap clean-snaps
 
 ebs-snap:
 	go build -o bin/ebs-snap ./cmd/ebs-snap
@@ -13,4 +13,7 @@ clean-snaps:
 
 install:
 	go install ./cmd/...
+
+test:
+	go test ./cmd/...
 

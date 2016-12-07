@@ -3,10 +3,10 @@ package snap
 import (
 	"fmt"
 	"os/exec"
+	"strings"
 )
 
 func Script(script string) error {
-	cmd := exec.Command(script)
 
 	var err error
 
@@ -21,11 +21,11 @@ func Script(script string) error {
 		}
 	}
 
-	cmd, args := args[0], args[1:]
+	cmd, argv := args[0], args[1:]
 
-	c := exec.Command(cmd, args...)
+	c := exec.Command(cmd, argv...)
 
-	stdout, err := cmd.Output()
+	stdout, err := c.Output()
 	if err != nil {
 		return err
 	}
